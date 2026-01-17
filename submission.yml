@@ -1,0 +1,15 @@
+setup:
+  - docker-compose build
+
+start:
+  - docker-compose up -d
+
+verify:
+  - curl http://localhost:8000/health
+  - curl http://localhost:8000/api/v1/webhooks/logs
+
+test:
+  - echo "No automated tests"
+
+shutdown:
+  - docker-compose down -v

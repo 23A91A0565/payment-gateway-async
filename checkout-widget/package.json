@@ -1,0 +1,13 @@
+{
+  "name": "payment-gateway-checkout-widget",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/checkout.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "devDependencies": {
+    "webpack": "^5.104.1",
+    "webpack-cli": "^5.1.4"
+  }
+}
