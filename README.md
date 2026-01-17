@@ -193,7 +193,3 @@ graph TD
 
 ---
 
-## Notes.  
-- All services start using `docker-compose up -d`.  
-
----
