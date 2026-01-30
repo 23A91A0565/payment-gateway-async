@@ -18,7 +18,6 @@ export default class PaymentGateway {
       this.overlay = null;
     }
   }
-
   createModal() {
     this.overlay = document.createElement('div');
     this.overlay.className = 'pg-overlay';
