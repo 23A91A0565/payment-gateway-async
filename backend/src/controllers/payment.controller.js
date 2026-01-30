@@ -11,7 +11,6 @@ exports.createPayment = async (req, res) => {
     }
 
     const { amount, currency } = req.body;
-
     if (!amount || !currency) {
       return res.status(400).json({ error: 'amount and currency required' });
     }
