@@ -33,7 +33,6 @@ exports.createRefund = async (req, res) => {
       return res.status(400).json({ error: 'Refund amount exceeds payment amount' });
     }
     const refundId = uuidv4();
-
     await pool.query(
       `INSERT INTO refunds (id, payment_id, amount, status)
        VALUES ($1, $2, $3, 'pending')`,
