@@ -13,7 +13,6 @@ export default function Webhooks() {
   useEffect(() => {
     loadLogs();
   }, []);
-
   const saveConfig = async () => {
     await api.post('/webhooks/config', { webhookUrl });
     alert('Webhook config saved');
