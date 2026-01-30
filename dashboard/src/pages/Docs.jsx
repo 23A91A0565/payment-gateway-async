@@ -2,7 +2,6 @@ export default function Docs() {
   return (
     <div data-test-id="api-docs">
       <h2>Integration Guide</h2>
-
       <h3>1. Create Order</h3>
       <pre>
 {`curl -X POST http://localhost:8000/api/v1/payments \\
