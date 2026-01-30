@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS payments (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+
 -- Idempotency keys
 CREATE TABLE IF NOT EXISTS idempotency_keys (
   key VARCHAR(255) PRIMARY KEY,
