@@ -4,13 +4,13 @@ export default function Docs() {
       <h2>Integration Guide</h2>
       <h3>1. Create Order</h3>
       <pre>
-{`curl -X POST http://localhost:8000/api/v1/payments \\
-  -H "Content-Type: application/json" \\
-  -H "Idempotency-Key: key_test_123" \\
-  -d '{
-    "amount": 50000,
-    "currency": "INR"
-  }'`}
+        {`curl -X POST http://localhost:8000/api/v1/payments \\
+          -H "Content-Type: application/json" \\
+          -H "Idempotency-Key: key_test_123" \\
+          -d '{
+            "amount": 50000,
+            "currency": "INR"
+          }'`}
       </pre>
       <h3>2. SDK Integration</h3>
       <pre>
