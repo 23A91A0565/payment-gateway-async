@@ -57,7 +57,6 @@ exports.sendTestWebhook = async (req, res) => {
   );
 
   await webhookQueue.add({ webhookId });
-
   res.json({ success: true });
 };
 exports.saveWebhookConfig = async (req, res) => {
