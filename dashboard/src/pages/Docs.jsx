@@ -13,7 +13,6 @@ export default function Docs() {
     "currency": "INR"
   }'`}
       </pre>
-
       <h3>2. SDK Integration</h3>
       <pre>
 {`<script src="http://localhost:3000/checkout.js"></script>
