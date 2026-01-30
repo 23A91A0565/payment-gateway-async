@@ -14,5 +14,6 @@ verify:
 test:
   - echo "No automated tests"
 
+
 shutdown:
   - docker-compose down -v
