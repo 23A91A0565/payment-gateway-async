@@ -27,7 +27,8 @@ checkout.open();
 
       <h3>3. Verify Webhook Signature</h3>
       <pre>
-{`const crypto = require('crypto');
+{
+  `const crypto = require('crypto');
 
 function verifyWebhook(payload, signature, secret) {
   return crypto
