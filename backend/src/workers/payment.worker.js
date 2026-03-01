@@ -1,46 +1,87 @@
 const paymentQueue = require('../queues/payment.queue');
-const webhookQueue = require('../queues/webhook.queue');
 const pool = require('../db');
-const { v4: uuidv4 } = require('uuid');
+const { buildWebhookPayload, enqueueWebhookIfConfigured } = require('../services/webhook.service');
+
+const getProcessingDelayMs = () => {
+  if (String(process.env.TEST_MODE).toLowerCase() === 'true') {
+    return Number(process.env.TEST_PROCESSING_DELAY || 1000);
+  }
+
+  return Math.floor(Math.random() * 5001) + 5000;
+};
+
+const getPaymentSuccess = (method) => {
+  if (String(process.env.TEST_MODE).toLowerCase() === 'true') {
+    const flag = process.env.TEST_PAYMENT_SUCCESS;
+    return flag === undefined ? true : String(flag).toLowerCase() === 'true';
+  }
+
+  const normalizedMethod = String(method || '').toLowerCase();
+  if (normalizedMethod === 'upi') {
+    return Math.random() < 0.9;
+  }
+
+  if (normalizedMethod === 'card') {
+    return Math.random() < 0.95;
+  }
+
+  return Math.random() < 0.9;
+};
 
 paymentQueue.process(async (job) => {
-  const { paymentId, amount, currency } = job.data;
+  const { paymentId } = job.data;
 
-  // Simulate processing delay (2–4 sec)
-  await new Promise((r) => setTimeout(r, 3000));
+  const paymentResult = await pool.query(
+    `SELECT id, merchant_id, order_id, amount, currency, method, vpa, created_at
+     FROM payments
+     WHERE id = $1`,
+    [paymentId]
+  );
 
-  // Simulate outcome (80% success)
-  const isSuccess = Math.random() < 0.8;
+  if (paymentResult.rows.length === 0) {
+    return;
+  }
+
+  const payment = paymentResult.rows[0];
+
+  await new Promise((resolve) => setTimeout(resolve, getProcessingDelayMs()));
+
+  const isSuccess = getPaymentSuccess(payment.method);
   const status = isSuccess ? 'success' : 'failed';
 
-  // Update payment status
   await pool.query(
-    'UPDATE payments SET status = $1, updated_at = NOW() WHERE id = $2',
-    [status, paymentId]
+    `UPDATE payments
+     SET status = $1,
+         error_code = $2,
+         error_description = $3,
+         updated_at = NOW()
+     WHERE id = $4`,
+    [
+      status,
+      isSuccess ? null : 'PAYMENT_FAILED',
+      isSuccess ? null : 'Payment processing failed',
+      paymentId
+    ]
   );
 
-  // Prepare webhook
   const event = isSuccess ? 'payment.success' : 'payment.failed';
 
-  const payload = {
-    paymentId,
-    amount,
-    currency,
-    status
-  };
+  const payload = buildWebhookPayload(event, {
+    payment: {
+      id: payment.id,
+      order_id: payment.order_id,
+      amount: payment.amount,
+      currency: payment.currency,
+      method: payment.method,
+      vpa: payment.vpa,
+      status,
+      created_at: payment.created_at
+    }
+  });
 
-  const webhookId = uuidv4();
-
-  // Insert webhook log
-  await pool.query(
-    `INSERT INTO webhook_logs
-     (id, event, payload, status, attempts)
-     VALUES ($1, $2, $3, $4, 0)`,
-    [webhookId, event, payload, 'pending']
-  );
-
-  // Enqueue webhook delivery
-  await webhookQueue.add({
-    webhookId
+  await enqueueWebhookIfConfigured({
+    merchantId: payment.merchant_id,
+    event,
+    payload
   });
 });

@@ -13,9 +13,11 @@ app.get('/health', (req, res) => {
 const paymentRoutes = require('./routes/payment.routes');
 const refundRoutes = require('./routes/refund.routes');
 const webhookRoutes = require('./routes/webhook.routes');
+const testRoutes = require('./routes/test.routes');
 
 app.use('/api/v1', paymentRoutes);
 app.use('/api/v1', refundRoutes);
 app.use('/api/v1', webhookRoutes);
+app.use('/api/v1', testRoutes);
 
 module.exports = app;

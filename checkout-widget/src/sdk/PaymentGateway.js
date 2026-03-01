@@ -2,51 +2,96 @@ import './styles.css';
 
 export default class PaymentGateway {
   constructor(options) {
+    if (!options || !options.key || !options.orderId) {
+      throw new Error('PaymentGateway requires key and orderId');
+    }
+
     this.key = options.key;
     this.orderId = options.orderId;
     this.onSuccess = options.onSuccess;
     this.onFailure = options.onFailure;
+    this.onClose = options.onClose;
+    this.modalRoot = null;
+    this.messageHandler = this.handleMessage.bind(this);
   }
 
   open() {
+    if (this.modalRoot) {
+      return;
+    }
+
     this.createModal();
+    window.addEventListener('message', this.messageHandler);
   }
 
   close() {
-    if (this.overlay) {
-      document.body.removeChild(this.overlay);
-      this.overlay = null;
+    window.removeEventListener('message', this.messageHandler);
+
+    if (this.modalRoot) {
+      document.body.removeChild(this.modalRoot);
+      this.modalRoot = null;
+    }
+
+    if (typeof this.onClose === 'function') {
+      this.onClose();
     }
   }
   createModal() {
-    this.overlay = document.createElement('div');
-    this.overlay.className = 'pg-overlay';
+    const parentOrigin = encodeURIComponent(window.location.origin);
+
+    const modal = document.createElement('div');
+    modal.id = 'payment-gateway-modal';
+    modal.setAttribute('data-testid', 'payment-modal');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
 
     const iframe = document.createElement('iframe');
-    iframe.src = 'http://localhost:3001/iframe.html';
-    iframe.className = 'pg-iframe';
+    iframe.className = 'payment-iframe';
+    iframe.setAttribute('data-testid', 'payment-iframe');
+    iframe.src = `http://localhost:3001/checkout?order_id=${encodeURIComponent(this.orderId)}&embedded=true&origin=${parentOrigin}`;
 
-    this.overlay.appendChild(iframe);
-    document.body.appendChild(this.overlay);
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-button';
+    closeButton.setAttribute('data-testid', 'close-modal-button');
+    closeButton.setAttribute('aria-label', 'Close');
+    closeButton.textContent = '×';
+    closeButton.addEventListener('click', () => this.close());
 
-    window.addEventListener('message', this.handleMessage.bind(this));
+    content.appendChild(iframe);
+    content.appendChild(closeButton);
+    overlay.appendChild(content);
+    modal.appendChild(overlay);
+
+    this.modalRoot = modal;
+    document.body.appendChild(this.modalRoot);
   }
 
   handleMessage(event) {
     if (!event.data || !event.data.type) return;
 
-    if (event.data.type === 'PAYMENT_SUCCESS') {
-      this.onSuccess?.(event.data.payload);
+    if (event.origin !== 'http://localhost:3001') {
+      return;
+    }
+
+    if (event.data.type === 'payment_success') {
+      this.onSuccess?.(event.data.data);
       this.close();
     }
 
-    if (event.data.type === 'PAYMENT_FAILURE') {
-      this.onFailure?.(event.data.payload);
-      this.close();
+    if (event.data.type === 'payment_failed') {
+      this.onFailure?.(event.data.data);
     }
 
-    if (event.data.type === 'CLOSE_MODAL') {
+    if (event.data.type === 'close_modal') {
       this.close();
     }
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.PaymentGateway = PaymentGateway;
 }
